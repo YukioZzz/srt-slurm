@@ -2329,6 +2329,9 @@ class SrtConfig:
     profiling: ProfilingConfig = field(default_factory=ProfilingConfig)
     output: OutputConfig = field(default_factory=OutputConfig)
     health_check: HealthCheckConfig = field(default_factory=HealthCheckConfig)
+    # Grace after TERM before escalating worker steps. Automatic Nsight capture
+    # keeps its own report-finalization timeout; frontends and services are separate.
+    worker_shutdown_timeout_seconds: float = 30.0
     infra: InfraConfig = field(default_factory=InfraConfig)
     observability: ObservabilityConfig = field(default_factory=ObservabilityConfig)
     telemetry: TelemetryConfig = field(default_factory=TelemetryConfig)
@@ -2372,6 +2375,8 @@ class SrtConfig:
 
     def __post_init__(self):
         """Validate configuration after initialization."""
+        if not math.isfinite(self.worker_shutdown_timeout_seconds) or self.worker_shutdown_timeout_seconds <= 0:
+            raise ValidationError("worker_shutdown_timeout_seconds must be finite and greater than zero")
         self._validate_role_backends()
         self._validate_frontend_worker_selection()
         self._validate_profiling()

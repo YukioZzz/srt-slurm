@@ -10,6 +10,7 @@ from unittest.mock import patch
 
 import pytest
 import yaml
+from marshmallow import ValidationError
 
 from srtctl.cli.submit import show_config_details
 from srtctl.core.schema import SrtConfig
@@ -55,6 +56,18 @@ def test_cluster_gpu_visibility_is_visible(tmp_path, monkeypatch, capsys):
     monkeypatch.setenv("SRTSLURM_CONFIG", str(cluster_config))
     show_config_details(_make_config())
     assert "GPU subset visibility variable: ROCR_VISIBLE_DEVICES" in capsys.readouterr().out
+
+
+def test_worker_shutdown_policy_is_visible(capsys):
+    config = _make_config({"worker_shutdown_timeout_seconds": 240})
+    show_config_details(config)
+    assert "Worker shutdown timeout: 240s" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize("timeout", [0, -1, float("inf"), float("nan")])
+def test_worker_shutdown_rejects_unbounded_or_nonpositive_grace(timeout):
+    with pytest.raises(ValidationError):
+        _make_config({"worker_shutdown_timeout_seconds": timeout})
 
 
 def test_role_engines_images_and_environments_are_visible(capsys):

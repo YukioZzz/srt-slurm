@@ -23,6 +23,7 @@ Top-level keys of a recipe YAML.
 | `profiling` | [ProfilingConfig](#profilingconfig) | `ProfilingConfig()` |  |
 | `output` | [OutputConfig](#outputconfig) | `OutputConfig()` |  |
 | `health_check` | [HealthCheckConfig](#healthcheckconfig) | `HealthCheckConfig()` |  |
+| `worker_shutdown_timeout_seconds` | float | `30.0` | Grace after TERM before escalating worker steps. Automatic Nsight capture keeps its own report-finalization timeout; frontends and services are separate. |
 | `observability` | [ObservabilityConfig](#observabilityconfig) | `ObservabilityConfig()` |  |
 | `telemetry` | [TelemetryConfig](#telemetryconfig) | `TelemetryConfig()` |  |
 | `environment` | dict[str, str] | `{}` |  |

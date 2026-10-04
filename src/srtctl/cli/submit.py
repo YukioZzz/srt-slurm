@@ -253,6 +253,7 @@ def show_config_details(config: SrtConfig) -> None:
     """
     visible_devices_env = get_srtslurm_setting("visible_devices_env", "CUDA_VISIBLE_DEVICES")
     console.print(f"GPU subset visibility variable: {visible_devices_env}")
+    console.print(f"Worker shutdown timeout: {config.worker_shutdown_timeout_seconds:g}s")
     if config.role_backends or config.role_containers:
         for role, backend in config.active_role_backends():
             console.print(f"{role}: engine={backend.type}, container={config.worker_container_for_role(role)}")

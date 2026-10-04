@@ -862,6 +862,14 @@ class ProcessRegistry:
         """Print detailed failure info with log tails."""
 ```
 
+Worker steps normally have 30 seconds after TERM to exit before escalation. A recipe can extend this timeout to let an engine drain requests and release resources:
+
+```yaml
+worker_shutdown_timeout_seconds: 240
+```
+
+Make this outer timeout longer than the engine's drain and resource-release budgets. It must be finite and positive. Signal delivery and bounded escalation are unchanged; this does not disable failure detection or change benchmark duration. Automatic Nsight capture retains its separate report-finalization timeout. Frontends and services retain their own policies. See [the direct vLLM example](../examples/vllm/vllm-direct-agg.yaml).
+
 ### ManagedProcess
 
 ```python

@@ -30,9 +30,6 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-# Engines shut down on SIGTERM (deregister, free GPUs, flush); give them longer than the default 10s.
-WORKER_TERMINATE_TIMEOUT_SECONDS = 30.0
-
 # Dynamo runtime (Rust) log filter for worker containers; YAML prefill_environment /
 # decode_environment / aggregated_environment override via the merge below.
 _DEFAULT_WORKER_DYN_LOG = "info,dynamo_runtime::pipeline::network::ingress::push_handler=warn"
@@ -432,7 +429,9 @@ class WorkerStageMixin:
             # SIGTERM reaches the engine through the step so it deregisters and
             # frees the GPUs cleanly; a signalled srun would SIGKILL it instead.
             terminate_timeout=(
-                self.config.observability.nsys.terminate_timeout if automatic_nsys else WORKER_TERMINATE_TIMEOUT_SECONDS
+                self.config.observability.nsys.terminate_timeout
+                if automatic_nsys
+                else self.config.worker_shutdown_timeout_seconds
             ),
             signal_full=not automatic_nsys,
             step_name=step_name,
@@ -657,7 +656,9 @@ class WorkerStageMixin:
             critical=self.config.resources.worker_critical(mode),
             # Signal every MPI task; profiler wrappers stop capture before the app.
             terminate_timeout=(
-                self.config.observability.nsys.terminate_timeout if automatic_nsys else WORKER_TERMINATE_TIMEOUT_SECONDS
+                self.config.observability.nsys.terminate_timeout
+                if automatic_nsys
+                else self.config.worker_shutdown_timeout_seconds
             ),
             signal_full=not automatic_nsys,
             step_name=step_name,

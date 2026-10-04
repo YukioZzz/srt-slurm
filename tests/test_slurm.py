@@ -193,6 +193,7 @@ def test_worker_stage_wraps_nonfatal_fingerprint_hook(tmp_path: Path) -> None:
         profiling=SimpleNamespace(enabled=False, is_nsys=False),
         resources=ResourceConfig(),
         health_check=HealthCheckConfig(),
+        worker_shutdown_timeout_seconds=30.0,
         backend=backend,
         backend_for_role=lambda _mode: backend,
         role_containers={},
@@ -264,6 +265,7 @@ def _remap_worker_mixin(tmp_path: Path, *, frontend_type: str, dynamo_install: b
         profiling=SimpleNamespace(enabled=False, is_nsys=False),
         resources=ResourceConfig(),
         health_check=HealthCheckConfig(),
+        worker_shutdown_timeout_seconds=30.0,
         backend=backend,
         backend_for_role=lambda _mode: backend,
         role_containers={},
@@ -367,6 +369,26 @@ def test_worker_container_paths_follow_a_remapped_log_mount(tmp_path: Path, laun
     assert capture.call_args.args[0] == "/run/logs/fingerprint_prefill_w0.json"
     # srtctl still creates the profile directory on the host side of the mount.
     assert (tmp_path / "profiles" / "prefill").is_dir()
+
+
+@pytest.mark.parametrize("launch_method", ["start_worker", "start_endpoint_worker"])
+@pytest.mark.parametrize("custom", [False, True])
+def test_worker_launch_preserves_configured_shutdown_policy(tmp_path: Path, launch_method: str, custom: bool) -> None:
+    """Both launch paths hand the loaded policy to the actual process manager."""
+    mixin, process = _remap_worker_mixin(tmp_path, frontend_type="sglang-router", dynamo_install=False)
+    if custom:
+        mixin.config.worker_shutdown_timeout_seconds = 240
+    with (
+        patch("srtctl.cli.mixins.worker_stage.generate_capture_script", return_value="true"),
+        patch("srtctl.cli.mixins.worker_stage.start_srun_process", return_value=MagicMock()),
+    ):
+        managed = (
+            mixin.start_worker(process, [process])
+            if launch_method == "start_worker"
+            else mixin.start_endpoint_worker([process])
+        )
+    assert managed.terminate_timeout == (240 if custom else 30)
+    assert managed.signal_full
 
 
 def test_worker_stage_injects_remap_root_for_dynamo_install(tmp_path: Path) -> None:
@@ -699,6 +721,7 @@ def test_worker_stage_unsets_vllm_port_for_multinode_endpoint(tmp_path: Path) ->
         profiling=SimpleNamespace(enabled=False, is_nsys=False),
         resources=ResourceConfig(),
         health_check=HealthCheckConfig(),
+        worker_shutdown_timeout_seconds=30.0,
         backend=backend,
         backend_for_role=lambda _mode: backend,
         role_containers={},
