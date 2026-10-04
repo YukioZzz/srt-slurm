@@ -23,6 +23,7 @@ Top-level keys of a recipe YAML.
 | `profiling` | [ProfilingConfig](#profilingconfig) | `ProfilingConfig()` | Nsight Systems or PyTorch profiling of the workers. |
 | `output` | [OutputConfig](#outputconfig) | `OutputConfig()` | Where the job writes logs and results. |
 | `health_check` | [HealthCheckConfig](#healthcheckconfig) | `HealthCheckConfig()` | How long to poll the frontend for ready workers before failing the run. |
+| `worker_shutdown_timeout_seconds` | float | `30.0` | Grace after TERM before escalating worker steps. Automatic Nsight capture keeps its own report-finalization timeout; frontends and services are separate. |
 | `observability` | [ObservabilityConfig](#observabilityconfig) | `ObservabilityConfig()` | Engine metrics and traces, Tachometer collection, and automatic Nsight tracing. |
 | `telemetry` | [TelemetryConfig](#telemetryconfig) | `TelemetryConfig()` | GPU (DCGM) and CPU power sampling over the benchmark measurement windows. |
 | `environment` | dict[str, str] | `{}` | Environment variables for every worker; applied after `roles.<role>.env`, so a key set in both takes this value. Values may use `{node}` and `{node_id}`. |

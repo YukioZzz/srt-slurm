@@ -1888,6 +1888,11 @@
           "$ref": "#/$defs/HealthCheckConfig",
           "description": "How long to poll the frontend for ready workers before failing the run."
         },
+        "worker_shutdown_timeout_seconds": {
+          "type": "number",
+          "description": "Grace after TERM before escalating worker steps. Automatic Nsight capture keeps its own report-finalization timeout; frontends and services are separate.",
+          "default": 30.0
+        },
         "observability": {
           "$ref": "#/$defs/ObservabilityConfig",
           "description": "Engine metrics and traces, Tachometer collection, and automatic Nsight tracing."
@@ -2107,6 +2112,11 @@
         "health_check": {
           "$ref": "#/$defs/HealthCheckConfig",
           "description": "How long to poll the frontend for ready workers before failing the run."
+        },
+        "worker_shutdown_timeout_seconds": {
+          "type": "number",
+          "description": "Grace after TERM before escalating worker steps. Automatic Nsight capture keeps its own report-finalization timeout; frontends and services are separate.",
+          "default": 30.0
         },
         "observability": {
           "$ref": "#/$defs/ObservabilityConfig",

@@ -10,6 +10,7 @@ from unittest.mock import patch
 
 import pytest
 import yaml
+from marshmallow import ValidationError
 from rich.console import Console
 
 from srtctl.cli import submit
@@ -81,6 +82,18 @@ def test_role_restart_policy_and_limits_are_visible(capsys):
     output = " ".join(capsys.readouterr().out.split())
     assert "decode: restart=on-failure, max_restarts=2, backoff_seconds=4, max_backoff_seconds=300" in output
     assert "prefill: restart=" not in output
+
+
+def test_worker_shutdown_policy_is_visible(capsys):
+    config = _make_config({"worker_shutdown_timeout_seconds": 240})
+    show_config_details(config)
+    assert "Worker shutdown timeout: 240s" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize("timeout", [0, -1, float("inf"), float("nan")])
+def test_worker_shutdown_rejects_unbounded_or_nonpositive_grace(timeout):
+    with pytest.raises(ValidationError):
+        _make_config({"worker_shutdown_timeout_seconds": timeout})
 
 
 def test_default_restart_policy_keeps_dry_run_unchanged(capsys):

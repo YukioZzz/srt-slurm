@@ -2722,6 +2722,9 @@ class SrtConfig:
     output: OutputConfig = field(default_factory=OutputConfig)
     # How long to poll the frontend for ready workers before failing the run.
     health_check: HealthCheckConfig = field(default_factory=HealthCheckConfig)
+    # Grace after TERM before escalating worker steps. Automatic Nsight capture
+    # keeps its own report-finalization timeout; frontends and services are separate.
+    worker_shutdown_timeout_seconds: float = 30.0
     # Engine metrics and traces, Tachometer collection, and automatic Nsight tracing.
     observability: ObservabilityConfig = field(default_factory=ObservabilityConfig)
     # GPU (DCGM) and CPU power sampling over the benchmark measurement windows.
@@ -2773,6 +2776,8 @@ class SrtConfig:
 
     def __post_init__(self):
         """Validate configuration after initialization."""
+        if not math.isfinite(self.worker_shutdown_timeout_seconds) or self.worker_shutdown_timeout_seconds <= 0:
+            raise ValidationError("worker_shutdown_timeout_seconds must be finite and greater than zero")
         self._validate_roles()
         _ = self.backend  # bind the roles onto the engine now, so a bad role setting fails at load
         self._validate_role_backends()

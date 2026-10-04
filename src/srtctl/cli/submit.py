@@ -254,6 +254,7 @@ def show_config_details(config: SrtConfig) -> None:
     """
     visible_devices_env = get_srtslurm_setting("visible_devices_env", "CUDA_VISIBLE_DEVICES")
     console.print(f"GPU subset visibility variable: {visible_devices_env}")
+    console.print(f"Worker shutdown timeout: {config.worker_shutdown_timeout_seconds:g}s")
     for role, spec in config.roles.items():
         policy = spec.restart
         if policy.enabled:

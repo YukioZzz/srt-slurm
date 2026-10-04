@@ -25,6 +25,8 @@ frontend:
   enable_multiple_frontends: false
 
 engine: vllm
+# Allow the serving process to finish resource teardown before escalation.
+worker_shutdown_timeout_seconds: 120
 roles:
   agg:
     nodes: 1
