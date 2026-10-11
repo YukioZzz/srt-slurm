@@ -567,9 +567,11 @@ def setup_signal_handlers(
     """
 
     def signal_handler(signum, frame):
+        if stop_event.is_set():
+            return
+        stop_event.set()
         sig_name = signal.Signals(signum).name
         logger.warning("Received signal %s, initiating cleanup...", sig_name)
-        stop_event.set()
         registry.cleanup()
         sys.exit(1)
 

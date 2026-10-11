@@ -3,6 +3,8 @@
 
 """Tests for ProcessRegistry."""
 
+import subprocess
+import sys
 import threading
 from pathlib import Path
 from subprocess import Popen, TimeoutExpired
@@ -11,6 +13,45 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from srtctl.core.processes import ManagedProcess, ProcessRegistry, start_process_monitor, terminate_and_reap
+
+
+@pytest.mark.parametrize("signal_initiated", [False, True])
+def test_signal_during_cleanup_does_not_reenter_registry(signal_initiated):
+    """A TERM delivered while cleanup owns its lock must not reacquire it."""
+    script = """
+import signal
+import sys
+import threading
+from unittest.mock import MagicMock
+from srtctl.core.processes import ManagedProcess, ProcessRegistry, setup_signal_handlers
+
+child = MagicMock()
+child.poll.return_value = None
+def finish(timeout):
+    signal.raise_signal(signal.SIGTERM)
+    child.poll.return_value = child.returncode = 0
+    print("child reaped", flush=True)
+    return 0
+child.wait.side_effect = finish
+registry = ProcessRegistry("signal-regression")
+registry.add_process(ManagedProcess("worker", child))
+stopping = threading.Event()
+setup_signal_handlers(stopping, registry)
+if sys.argv[1] == "True":
+    signal.raise_signal(signal.SIGTERM)
+else:
+    stopping.set()
+    registry.cleanup()
+"""
+    result = subprocess.run(
+        [sys.executable, "-c", script, str(signal_initiated)],
+        capture_output=True,
+        text=True,
+        timeout=10,
+        check=False,
+    )
+    assert result.returncode == (1 if signal_initiated else 0), result.stderr
+    assert result.stdout == "child reaped\n"
 
 
 class TestManagedProcess:
